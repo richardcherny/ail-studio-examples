@@ -1,0 +1,4 @@
+order_id,customer_id,amount_cents
+O101,C001,10000
+O102,C001,5000
+O103,C002,5000
