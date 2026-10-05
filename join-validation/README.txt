@@ -1,6 +1,43 @@
 When a CSV join turns $200 into $350
 ==================================
 
+Adding customer segments should not change which orders appear in a report or
+how much they are worth. The relationship here is many orders to one customer:
+every order must match exactly one customer row. A repeated lookup key breaks
+that contract, even when both copies contain identical information.
+
+The failure, row by row
+----------------------
+The synthetic orders.csv contains three orders totaling $200 (20000 cents):
+
+order_id,customer_id,amount_cents
+O101,C001,10000
+O102,C001,5000
+O103,C002,5000
+
+In customers_exact.csv, C001 appears twice:
+
+customer_id,segment
+C001,Retail
+C001,Retail
+C002,Business
+
+An unchecked inner join emits one row for every match. Both C001 orders match
+twice, so their combined $150 is counted a second time. C002 still matches once.
+The resulting $350 is not new revenue; it is duplicated rows. The demo prints:
+
+input: rows=3 total_cents=20000
+joined: rows=5 total_cents=35000
+order_id,customer_id,amount_cents,segment
+O101,C001,10000,Retail
+O101,C001,10000,Retail
+O102,C001,5000,Retail
+O102,C001,5000,Retail
+O103,C002,5000,Business
+segment_totals_cents: {'Business': 5000, 'Retail': 30000}
+
+Reproduce the failure, then enforce the contract
+-----------------------------------------------
 Synthetic, local-only tutorial. Requires Python 3.9 or later. No third-party
 packages are needed. To get the complete example at the tested code revision,
 run these commands in a terminal with Git installed:
@@ -18,11 +55,11 @@ python3 join_guard.py customers_exact.csv --unsafe-demo
 python3 join_guard.py customers_valid.csv
 python3 -m unittest -v
 
-The first command deliberately runs an unchecked inner join: 3 orders totaling
-20000 cents become 5 rows totaling 35000 cents. An exact duplicate customer
-row matches two orders twice. The valid command preserves 3 rows and 20000
-cents, with segment totals Business=5000 and Retail=15000. It prints a readable
-report containing summaries and CSV rows; the complete output is not a CSV file.
+The first command deliberately bypasses validation to reproduce the output
+above. The second uses customers_valid.csv, which has one row per customer,
+and preserves all three orders and 20000 cents. Its segment totals are
+Business=5000 and Retail=15000. Both commands print a readable report containing
+summaries and CSV rows; the complete output is not a CSV file.
 
 Try these separately; each intentionally exits with code 2, writes REFUSED to
 stderr, and leaves stdout empty:

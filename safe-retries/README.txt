@@ -46,21 +46,49 @@ before commit and after a committed reservation.
 
 What makes the retry safe here
 ------------------------------
-safe_retries.py: reserve acquires a SQLite write transaction with BEGIN IMMEDIATE.
-It checks the stored key/payload, updates stock if appropriate, and stores the
-response in that same transaction before COMMIT. SQLite permits only one write
-transaction at a time: taking it before the receipt lookup prevents two same-key
-callers from both treating the request as new. A second caller must wait for that
-writer, or fail with SQLITE_BUSY; after the first commits, a successful retry
-finds its saved receipt. A different payload conflicts.
+In safe_retries.py, reserve validates the key and quantity before opening the
+transaction. A new request then follows this sequence:
+
+1. BEGIN IMMEDIATE acquires the SQLite write transaction before any receipt
+   lookup. SQLite permits only one write transaction at a time.
+2. Look up the request key in receipts. If it exists, compare the saved payload:
+   an identical payload selects the saved response; a different one raises
+   KeyConflict. Neither path creates another reservation.
+3. For a new key, reduce stock only if enough units remain. Build either the
+   reserved response or an insufficient-stock rejection, then store that response
+   with the key and payload in receipts.
+4. COMMIT the stock change and receipt together, then return the response.
+   An error before commit rolls the transaction back. A lost reply after commit
+   leaves both the reservation and its receipt available for the retry.
+
+For two callers using order-1042 with qty=3, starting from 10 units, the successful
+interleaving is easy to follow:
+
+- Caller A acquires the write transaction and finds no receipt.
+- Caller B reaches BEGIN IMMEDIATE while A still holds the write transaction.
+  B waits here, before reading receipts; if its lock wait times out, it receives
+  SQLITE_BUSY and must retry later.
+- A changes stock from 10 to 7, stores the response, and commits.
+- B acquires the write transaction, finds A's receipt, checks the matching
+  payload, and returns the saved stock_after=7 after committing its transaction.
+  B does not subtract another three units. The database has one receipt.
+
+If A rolls back instead, there is no committed receipt or stock change; B can
+process the request as new. This ordering is why the receipt lookup belongs
+inside the write transaction, not before it.
+
 A stored rejection is replayed too, even if stock is subsequently replenished.
 A replay is the historical response, not a fresh stock query; a new key requests
 a new action. Callers must reuse the original key when retrying the same action.
 
-The 10 tests cover rollback, both process-exit boundaries, changed payload,
-two concurrent same-key calls, lock timeout followed by retry, historical replay,
-rejected replay, key uniqueness, and invalid inputs. See the repository README
-for the executed runtime.
+Verification
+------------
+The demo, fault probe and all 10 tests were independently reproduced on Linux
+with Python 3.12.14 and SQLite 3.53.1 on 2026-10-05. The tests cover rollback,
+both process-exit boundaries, changed payload, two concurrent same-key calls,
+lock timeout followed by retry, historical replay, rejected replay, key
+uniqueness, and invalid inputs. This is the executed runtime, not a claim that
+every Python 3.12+ and SQLite combination has been tested.
 
 Limits
 ------
