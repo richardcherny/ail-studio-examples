@@ -2,8 +2,17 @@ When a CSV join turns $200 into $350
 ==================================
 
 Synthetic, local-only tutorial. Requires Python 3.9 or later. No third-party
-packages are needed. From this directory, use python3 (or your matching
-Python command on Windows):
+packages are needed. To get the complete example at the tested code revision,
+run these commands in a terminal with Git installed:
+
+git clone https://github.com/richardcherny/ail-studio-examples.git
+cd ail-studio-examples
+git checkout 5cad58b665423141334ce18ae54db97911045c67
+cd join-validation
+
+The checkout selects a fixed snapshot (Git may call this a detached HEAD), so
+later repository changes cannot alter this reproduction. Then use python3
+(or your matching Python command on Windows):
 
 python3 join_guard.py customers_exact.csv --unsafe-demo
 python3 join_guard.py customers_valid.csv
@@ -37,6 +46,26 @@ test_join_guard.py: 11 tests cover those paths, malformed input, negative/zero
 cents, and a case where duplicate-plus-missing errors leave count and total
 unchanged. Matching totals alone cannot establish a correct join.
 
+Why totals can look right while the join is wrong
+------------------------------------------------
+Consider two orders: A belongs to C001 and is worth 100 cents; B belongs to
+C002 and is also worth 100 cents. Now give the lookup two rows for C001 and
+no row for C002. An unchecked inner join returns A twice and drops B.
+The input and output both have two rows totaling 200 cents. Those matching
+summaries hide the fact that one order disappeared and another was copied.
+
+That is why this example checks two different requirements before joining:
+there must be at most one lookup row for each customer key, and every order's
+customer key must have a match. Several orders may share one customer; the
+lookup must still supply exactly one segment for each of those orders.
+The test named test_unchanged_count_and_total_can_hide_duplicate_plus_missing
+makes this counterexample executable. The valid-join test checks the actual
+output records, rather than trusting only a count or total.
+
+These checks establish the relationship encoded by the keys. They cannot
+detect a unique but incorrectly assigned customer ID or an inaccurate segment.
+Those need an authoritative source or separate business checks.
+
 Limits
 ------
 This is an in-memory, bounded CSV example, not a streaming or database engine.
@@ -47,5 +76,6 @@ allowed. Validation does not establish business accuracy or authorization.
 Duplicate problems are reported before missing-key problems. The unsafe flag is
 only for demonstrating failure and deliberately bypasses the join contract.
 
-The repository README records the current executed runtime. Python 3.9 is the
-stated source requirement, not a claim of a fresh 3.9 compatibility test.
+The demo commands, all three refusal cases and all 11 tests were independently
+reproduced on Linux with Python 3.12.14 on 2026-10-05. Python 3.9 is the stated
+source requirement, not a claim of a fresh 3.9 compatibility test.
