@@ -8,9 +8,9 @@ Small, runnable Python tutorials about data correctness. Each includes synthetic
 
 ## Tools by AIL Studio
 
-- [RecordBridge](https://ailstudio.gumroad.com/l/ufgfjf?utm_source=github), a $49 CSV migration reconciliation tool
-- [Trader's Edge Journal](https://ailstudio.gumroad.com/l/qsnmk?utm_source=github)
-- [Prop Firm Rules Cheat Sheet](https://ailstudio.gumroad.com/l/cbjdeq?utm_source=github) (free)
+- [RecordBridge](https://ailstudio.gumroad.com/l/ufgfjf?utm_source=github&utm_medium=repo&utm_campaign=ufgfjf), a $49 CSV migration reconciliation tool
+- [Trader's Edge Journal](https://ailstudio.gumroad.com/l/qsnmk?utm_source=github&utm_medium=repo&utm_campaign=qsnmk)
+- [Prop Firm Rules Cheat Sheet](https://ailstudio.gumroad.com/l/cbjdeq?utm_source=github&utm_medium=repo&utm_campaign=cbjdeq) (free)
 
 ## Run the examples
 
