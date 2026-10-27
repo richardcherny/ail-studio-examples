@@ -2,6 +2,8 @@
 
 Small, runnable Python tutorials about data correctness. Each includes synthetic inputs and tests. No third-party packages are needed to run them.
 
+More from AIL Studio: [ailstudio.netlify.app](https://ailstudio.netlify.app/?utm_source=github&utm_medium=profile&utm_campaign=site)
+
 - [Join validation](join-validation/README.txt): see how duplicate lookup rows turn a $200 total into $350, then reject ambiguous or missing customer keys before producing a report.
 - [Safe retries](safe-retries/README.txt): store a reservation and its receipt in one SQLite transaction so retrying the same request can return the original result without reducing stock again.
 - [Salesforce parent check](salesforce-parent-check/README.txt): compare a source Contact CSV with a migrated Contact CSV and flag rows whose parent Account changed or went missing.
