@@ -79,4 +79,4 @@ Full tool
 ---------
 RecordBridge is the CSV migration reconciliation tool from AIL Studio ($49):
 
-https://ailstudio.gumroad.com/l/ufgfjf?utm_source=github
+https://ailstudio.gumroad.com/l/ufgfjf?utm_source=github&utm_medium=repo&utm_campaign=ufgfjf
